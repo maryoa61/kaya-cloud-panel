@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +16,7 @@
 
     <div class="max-w-4xl mx-auto space-y-6">
         
-        <div class="bg-gray-900/80 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-gray-800 space-y-4 text-right" dir="rtl">
+        <div class="bg-gray-900/80 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-gray-800 space-y-4 text-right">
             <div class="flex justify-between items-center border-b border-gray-800 pb-3">
                 <h2 class="text-sm font-bold text-indigo-400 flex items-center gap-2">
                     ☁️ مرکز کنترل و همگام‌سازی ابری (Cloudflare KV - بدون فیلترشکن)
@@ -26,7 +26,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-[11px] font-semibold text-gray-400 mb-1">آدرس دامنه شخصی ورکر (Custom Domain):</label>
+                    <label class="block text-[11px] font-semibold text-gray-400 mb-1">آدرس دامنه شخصی ورکر اصلی (Custom Domain):</label>
                     <input type="text" id="workerUrl" oninput="saveSettings(); updateSubLink();" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-left font-mono focus:outline-none focus:border-indigo-500 text-gray-200" placeholder="https://sub.yourdomain.com">
                 </div>
                 <div>
@@ -52,7 +52,7 @@
             </div>
         </div>
 
-        <div class="bg-gray-900/80 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-gray-800 space-y-4 text-right" dir="rtl">
+        <div class="bg-gray-900/80 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-gray-800 space-y-4 text-right">
             <h2 class="text-sm font-bold text-amber-400 border-b border-gray-800 pb-3 flex items-center gap-2">
                 🛠️ موتور تزریق آی‌پی تمیز و فرگمنت (Config Generator)
             </h2>
@@ -78,8 +78,14 @@
                             ⚙️ فعال‌سازی و تزریق خودکار فرگمنت (Fragment)
                         </label>
                         <div class="grid grid-cols-2 gap-2">
-                            <input type="text" id="fragPackets" class="bg-gray-900 border border-gray-800 rounded-lg p-1.5 text-[10px] text-center font-mono focus:outline-none text-gray-300" value="10-20">
-                            <input type="text" id="fragInterval" class="bg-gray-900 border border-gray-800 rounded-lg p-1.5 text-[10px] text-center font-mono focus:outline-none text-gray-300" value="10-20">
+                            <div class="space-y-0.5">
+                                <span class="text-[9px] text-gray-500 block text-center">Packets</span>
+                                <input type="text" id="fragPackets" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-1.5 text-[10px] text-center font-mono focus:outline-none text-gray-300" value="10-20">
+                            </div>
+                            <div class="space-y-0.5">
+                                <span class="text-[9px] text-gray-500 block text-center">Interval (ms)</span>
+                                <input type="text" id="fragInterval" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-1.5 text-[10px] text-center font-mono focus:outline-none text-gray-300" value="10-20">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -127,6 +133,18 @@
             navigator.clipboard.writeText(linkText);
             alert("لینک با موفقیت کپی شد! 🎉");
         }
+    }
+
+    // تابع ایمن و استاندارد جهت تبدیل متون UTF-8 (شامل ایموجی و حروف فارسی) به کدگذاری Base64 بدون کرش مرورگر
+    function safeBtoa(str) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(str);
+        let binary = "";
+        const bytes = new Uint8Array(data);
+        for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
     }
 
     function processAndDeploy() {
@@ -184,24 +202,31 @@
         });
 
         const plainSubText = finalConfigs.join('\n');
-        const base64Data = btoa(unescape(encodeURIComponent(plainSubText)));
+        const base64Data = safeBtoa(plainSubText);
         
         sendToWorker(base64Data);
     }
 
     async function sendToWorker(base64Data) {
-        const workerUrl = document.getElementById('workerUrl').value.trim();
+        let workerUrl = document.getElementById('workerUrl').value.trim();
         const workerToken = document.getElementById('workerToken').value.trim();
         const kvKey = document.getElementById('kvKeyName').value.trim();
         const statusText = document.getElementById('statusText');
+
+        if(!workerUrl) {
+            alert("لطفاً ابتدا آدرس ورکر را وارد نمایید.");
+            return;
+        }
 
         statusText.innerText = "⏳ در حال آپدیت ابری...";
         statusText.className = "text-amber-400 text-xs font-bold";
 
         try {
+            // تنظیم آبجکت ارسالی مطابق با ساختار تأیید توکن سورس کد جدید ورکر شما
             const payload = { configs: base64Data, key: kvKey };
+            workerUrl = workerUrl.replace(/\/$/, "");
 
-            const response = await fetch(workerUrl.replace(/\/$/, ""), {
+            const response = await fetch(workerUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
