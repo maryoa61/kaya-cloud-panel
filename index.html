@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت ابری سابسکریپشن کایا</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body { font-family: Tahoma, Geneva, sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0f19; }
+        ::-webkit-scrollbar-thumb { background: #1e1b4b; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 font-sans min-h-screen p-4 md:p-8 selection:bg-indigo-500 selection:text-white">
+
+    <div class="max-w-4xl mx-auto space-y-6">
+        
+        <div class="bg-gray-900/80 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-gray-800 space-y-4 text-right" dir="rtl">
+            <div class="flex justify-between items-center border-b border-gray-800 pb-3">
+                <h2 class="text-sm font-bold text-indigo-400 flex items-center gap-2">
+                    ☁️ مرکز کنترل و همگام‌سازی ابری (Cloudflare KV - بدون فیلترشکن)
+                </h2>
+                <span id="statusText" class="text-xs text-gray-500 font-medium">آماده ارسال</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-[11px] font-semibold text-gray-400 mb-1">آدرس دامنه شخصی ورکر (Custom Domain):</label>
+                    <input type="text" id="workerUrl" oninput="saveSettings(); updateSubLink();" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-left font-mono focus:outline-none focus:border-indigo-500 text-gray-200" placeholder="https://sub.yourdomain.com">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-gray-400 mb-1">توکن امنیتی (Bearer Token):</label>
+                    <input type="password" id="workerToken" oninput="saveSettings()" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-left font-mono focus:outline-none focus:border-indigo-500 text-gray-200" value="kayamavy">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-gray-400 mb-1">نام کلید در حافظه KV (Key):</label>
+                    <input type="text" id="kvKeyName" oninput="saveSettings(); updateSubLink();" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-left font-mono focus:outline-none focus:border-indigo-500 text-indigo-300" value="mavy">
+                </div>
+            </div>
+
+            <div class="bg-gray-950/60 border border-gray-800/60 rounded-xl p-3 space-y-1">
+                <span class="block text-[10px] font-bold text-gray-500">🔗 لینک سابسکریپشن ملی برای نرم‌افزارها:</span>
+                <div class="flex items-center gap-2">
+                    <div id="subLinkDisplay" class="flex-1 text-left font-mono text-[11px] text-emerald-400 overflow-x-auto whitespace-nowrap py-1">
+                        -
+                    </div>
+                    <button onclick="copySubLink()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 text-[10px] px-2.5 py-1 rounded-lg transition-all font-semibold cursor-pointer">
+                        کپی لینک
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-900/80 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-gray-800 space-y-4 text-right" dir="rtl">
+            <h2 class="text-sm font-bold text-amber-400 border-b border-gray-800 pb-3 flex items-center gap-2">
+                🛠️ موتور تزریق آی‌پی تمیز و فرگمنت (Config Generator)
+            </h2>
+
+            <div>
+                <label class="block text-[11px] font-semibold text-gray-400 mb-1">کانفیگ مادر یا تمپلیت (VLESS / TROJAN):</label>
+                <input type="text" id="masterConfig" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-left font-mono focus:outline-none focus:border-amber-500 text-gray-300" placeholder="vless://xxxxxx@provider.com:443?path=...#MyTemplate">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[11px] font-semibold text-gray-400 mb-1">لیست آی‌پی‌های تمیز (هر خط یک آی‌پی یا IP:Port):</label>
+                    <textarea id="cleanIps" rows="5" class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-left font-mono focus:outline-none focus:border-amber-500 text-emerald-300" placeholder="104.16.24.5&#10;172.67.14.2:80"></textarea>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-400 mb-1">نام نمایشی کانفیگ‌ها (Remark):</label>
+                        <input type="text" id="configRemark" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-2 text-xs focus:outline-none focus:border-amber-500 text-gray-200" value="💎 KAYA | CUSTOM">
+                    </div>
+                    <div class="bg-gray-950 p-3 rounded-xl border border-gray-800 space-y-2">
+                        <label class="flex items-center gap-2 cursor-pointer text-[11px] font-semibold text-gray-400">
+                            <input type="checkbox" id="enableFragment" class="rounded bg-gray-900 border-gray-700 text-indigo-600 focus:ring-0">
+                            ⚙️ فعال‌سازی و تزریق خودکار فرگمنت (Fragment)
+                        </label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="fragPackets" class="bg-gray-900 border border-gray-800 rounded-lg p-1.5 text-[10px] text-center font-mono focus:outline-none text-gray-300" value="10-20">
+                            <input type="text" id="fragInterval" class="bg-gray-900 border border-gray-800 rounded-lg p-1.5 text-[10px] text-center font-mono focus:outline-none text-gray-300" value="10-20">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="processAndDeploy()" class="w-full bg-gradient-to-r from-amber-600 to-indigo-600 hover:from-amber-500 hover:to-indigo-500 text-white font-bold py-3 rounded-xl transition-all text-xs shadow-lg shadow-indigo-600/10 cursor-pointer flex justify-center items-center gap-2">
+                🔥 ساخت کانفیگ‌ها و آپدیت آنی سابسکریپشن ابری
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById('workerUrl').value = localStorage.getItem('cf_worker_url') || '';
+        document.getElementById('workerToken').value = localStorage.getItem('cf_worker_token') || 'kayamavy';
+        document.getElementById('kvKeyName').value = localStorage.getItem('cf_kv_key') || 'mavy';
+        document.getElementById('masterConfig').value = localStorage.getItem('cf_master_config') || '';
+        document.getElementById('configRemark').value = localStorage.getItem('cf_config_remark') || '💎 KAYA | CUSTOM';
+        updateSubLink();
+    });
+
+    function saveSettings() {
+        localStorage.setItem('cf_worker_url', document.getElementById('workerUrl').value.trim());
+        localStorage.setItem('cf_worker_token', document.getElementById('workerToken').value.trim());
+        localStorage.setItem('cf_kv_key', document.getElementById('kvKeyName').value.trim());
+        localStorage.setItem('cf_master_config', document.getElementById('masterConfig').value.trim());
+        localStorage.setItem('cf_config_remark', document.getElementById('configRemark').value.trim());
+    }
+
+    function updateSubLink() {
+        const url = document.getElementById('workerUrl').value.trim();
+        const key = document.getElementById('kvKeyName').value.trim();
+        const display = document.getElementById('subLinkDisplay');
+        if(url) {
+            display.innerText = url.replace(/\/$/, "") + "/?id=" + key;
+        } else {
+            display.innerText = "لطفاً آدرس دامنه اختصاصی بدون فیلتر خود را وارد کنید.";
+        }
+    }
+
+    function copySubLink() {
+        const linkText = document.getElementById('subLinkDisplay').innerText;
+        if(linkText.startsWith("http")) {
+            navigator.clipboard.writeText(linkText);
+            alert("لینک با موفقیت کپی شد! 🎉");
+        }
+    }
+
+    function processAndDeploy() {
+        saveSettings();
+        const master = document.getElementById('masterConfig').value.trim();
+        const ipsText = document.getElementById('cleanIps').value.trim();
+        const remark = document.getElementById('configRemark').value.trim();
+        const useFrag = document.getElementById('enableFragment').checked;
+        const fragP = document.getElementById('fragPackets').value.trim();
+        const fragI = document.getElementById('fragInterval').value.trim();
+
+        if (!master || !ipsText) {
+            alert("لطفاً مشخصات را کامل وارد کنید.");
+            return;
+        }
+
+        const ipList = ipsText.split('\n').map(x => x.trim()).filter(x => x.length > 0);
+        let finalConfigs = [];
+
+        const protocolMatch = master.match(/^(vless|trojan):\/\/([^@]+)@([^:?#]+):?([0-9]*)/);
+        if (!protocolMatch) {
+            alert("فرمت کانفیگ مادر معتبر نیست.");
+            return;
+        }
+
+        const protocol = protocolMatch[1];
+        const uuid = protocolMatch[2];
+        const originalPort = protocolMatch[4] || "443";
+        
+        const restOfConfig = master.substring(protocolMatch[0].length);
+        let queryParams = "";
+        if (restOfConfig.includes("?")) {
+            queryParams = restOfConfig.split("#")[0];
+        }
+
+        ipList.forEach((rawIp, index) => {
+            let ip = rawIp;
+            let port = originalPort;
+
+            if (rawIp.includes(":")) {
+                const parts = rawIp.split(":");
+                ip = parts[0];
+                port = parts[1];
+            }
+
+            let currentQuery = queryParams;
+            if (useFrag) {
+                if (currentQuery.length === 0) currentQuery = "?";
+                if (!currentQuery.endsWith("?")) currentQuery += "&";
+                currentQuery += `fragment=1&packet=${fragP}&interval=${fragI}`;
+            }
+
+            const finalLink = `${protocol}://${uuid}@${ip}:${port}${currentQuery}#${remark} - ${index + 1}`;
+            finalConfigs.push(finalLink);
+        });
+
+        const plainSubText = finalConfigs.join('\n');
+        const base64Data = btoa(unescape(encodeURIComponent(plainSubText)));
+        
+        sendToWorker(base64Data);
+    }
+
+    async function sendToWorker(base64Data) {
+        const workerUrl = document.getElementById('workerUrl').value.trim();
+        const workerToken = document.getElementById('workerToken').value.trim();
+        const kvKey = document.getElementById('kvKeyName').value.trim();
+        const statusText = document.getElementById('statusText');
+
+        statusText.innerText = "⏳ در حال آپدیت ابری...";
+        statusText.className = "text-amber-400 text-xs font-bold";
+
+        try {
+            const payload = { configs: base64Data, key: kvKey };
+
+            const response = await fetch(workerUrl.replace(/\/$/, ""), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + workerToken
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if(response.ok) {
+                statusText.innerText = "✅ سابسکریپشن ابری آپدیت شد!";
+                statusText.className = "text-emerald-400 text-xs font-bold";
+                alert("امپراتوری سابسکریپشن کایا با موفقیت به روز شد! 🚀💥");
+            } else {
+                statusText.innerText = "❌ خطا: توکن رد شد";
+                statusText.className = "text-red-400 text-xs font-bold";
+            }
+        } catch (e) {
+            statusText.innerText = "❌ خطا در اتصال";
+            statusText.className = "text-red-400 text-xs font-bold";
+        }
+    }
+    </script>
+</body>
+</html>
